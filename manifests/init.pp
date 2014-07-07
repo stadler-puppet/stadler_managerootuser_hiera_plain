@@ -1,17 +1,26 @@
 class stadler_managerootuser_hiera_plain {
- 
+
   $salt = hiera("managerootuser::plaintextsalt")
   $passwd= hiera("managerootuser::plaintextpasswd")
 
-  $hash = plain_pwd_to_md5hash($salt,$passwd)
-  # $hash = plain_test($passwd)
-  notice ($hash)
-  
+  case $::osfamily {
+    default: {
+      fail {"module not implemented for osfamily [{$::osfamily}]":}
+    }
+    'Debian': {
+      $hash = pwd_for_shadow_debian($salt,$passwd)
+    }
+    'RedHat': {
+      $hash = pwd_for_shadow_redhat($salt,$passwd)
+    }
+  }
+
   user { 'dan':
     ensure           => hiera('managerootuser::ensure'),
     comment          => hiera('managerootuser::comment'),
     home             => '/home/dan',
-    password         => "${hash}",
+    password         => $hash,
     shell            => '/bin/bash',
   }
+
 }
